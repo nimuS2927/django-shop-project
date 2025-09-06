@@ -1,13 +1,20 @@
 export COMPOSE_FILE := "docker-compose.local.yml"
 
 ## Just does not yet manage signals for subprocesses reliably, which can lead to unexpected behavior.
-## Exercise caution before expanding its usage in production environments. 
+## Exercise caution before expanding its usage in production environments.
 ## For more information, see https://github.com/casey/just/issues/2473 .
 
 
 # Default command to list all available commands.
 default:
     @just --list
+
+# merge: Merge environment dotenv files into .env
+# Usage: just merge prod or just merge local
+merge +env_type:
+    @echo "Merging '{{env_type}}' environment dotenv files into .env..."
+    @python merge_production_dotenvs_in_dotenv.py {{env_type}}
+    @echo "Merge completed."
 
 # build: Build python image.
 build:
