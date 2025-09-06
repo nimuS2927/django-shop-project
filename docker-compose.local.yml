@@ -12,7 +12,7 @@ services:
     container_name: remi_shop_local_django
     depends_on:
       - postgres
-      - redis
+#      - redis
     volumes:
       - .:/app:z
     env_file:
@@ -22,6 +22,13 @@ services:
       - '8000:8000'
     command: /start
 
+  init-postgres-dirs:
+    image: busybox
+    command: sh -c "mkdir -p ${POSTGRES_DATA_PATH:-./postgres_data} ${POSTGRES_BACKUPS_PATH:-./postgres_backups}"
+    volumes:
+      - ${POSTGRES_DATA_PATH:-./postgres_data}:${POSTGRES_DATA_PATH:-./postgres_data}
+      - ${POSTGRES_BACKUPS_PATH:-./postgres_backups}:${POSTGRES_BACKUPS_PATH:-./postgres_backups}
+
   postgres:
     build:
       context: .
@@ -29,41 +36,50 @@ services:
     image: remi_shop_production_postgres
     container_name: remi_shop_local_postgres
     volumes:
-      - remi_shop_local_postgres_data:/var/lib/postgresql/data
-      - remi_shop_local_postgres_data_backups:/backups
+      - ${POSTGRES_DATA_PATH:-./postgres_data}:/var/lib/postgresql/data
+      - ${POSTGRES_BACKUPS_PATH:-./postgres_backups}:/backups
     env_file:
-      - ./.envs/.local/.postgres
-
-  redis:
-    image: docker.io/redis:6
-    container_name: remi_shop_local_redis
-    volumes:
-      - remi_shop_local_redis_data:/data
-
-  celeryworker:
-    <<: *django
-    image: remi_shop_local_celeryworker
-    container_name: remi_shop_local_celeryworker
-    depends_on:
-      - redis
-      - postgres
-    ports: []
-    command: /start-celeryworker
-
-  celerybeat:
-    <<: *django
-    image: remi_shop_local_celerybeat
-    container_name: remi_shop_local_celerybeat
-    depends_on:
-      - redis
-      - postgres
-    ports: []
-    command: /start-celerybeat
-
-  flower:
-    <<: *django
-    image: remi_shop_local_flower
-    container_name: remi_shop_local_flower
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGPORT: ${POSTGRES_PORT}
     ports:
-      - '5555:5555'
-    command: /start-flower
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    depends_on:
+      - init-postgres-dirs
+
+#  redis:
+#    image: docker.io/redis:6
+#    container_name: remi_shop_local_redis
+#    volumes:
+#      - remi_shop_local_redis_data:/data
+#
+#  celeryworker:
+#    <<: *django
+#    image: remi_shop_local_celeryworker
+#    container_name: remi_shop_local_celeryworker
+#    depends_on:
+#      - redis
+#      - postgres
+#    ports: []
+#    command: /start-celeryworker
+#
+#  celerybeat:
+#    <<: *django
+#    image: remi_shop_local_celerybeat
+#    container_name: remi_shop_local_celerybeat
+#    depends_on:
+#      - redis
+#      - postgres
+#    ports: []
+#    command: /start-celerybeat
+#
+#  flower:
+#    <<: *django
+#    image: remi_shop_local_flower
+#    container_name: remi_shop_local_flower
+#    ports:
+#      - '5555:5555'
+#    command: /start-flower
