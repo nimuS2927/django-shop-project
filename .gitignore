@@ -332,3 +332,5 @@ remi_shop/media/
 !.envs/.local/
 
 .idea/
+/postgres_data/
+/postgres_backups/
