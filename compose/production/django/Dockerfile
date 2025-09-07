@@ -1,6 +1,6 @@
 
 # define an alias for the specific python version used in this file.
-FROM docker.io/python:3.12.11-slim-bookworm AS python
+FROM docker.io/python:3.13.0-slim-bookworm AS python
 
 # Python build stage
 FROM python AS python-build-stage
@@ -84,7 +84,7 @@ RUN chmod +x /start-flower
 
 
 # copy application code to WORKDIR
-COPY --chown=django:django . ${APP_HOME} 
+COPY --chown=django:django . ${APP_HOME}
 # explicitly create the media folder before changing ownership below
 RUN mkdir -p ${APP_HOME}/remi_shop/media
 
