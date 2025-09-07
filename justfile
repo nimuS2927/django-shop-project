@@ -16,15 +16,29 @@ merge +env_type:
     @python merge_production_dotenvs_in_dotenv.py {{env_type}}
     @echo "Merge completed."
 
-# build: Build python image.
-build:
-    @echo "Building python image..."
-    @docker compose build
+# build-local: Build local containers
+build-local *args:
+	@docker compose -f docker-compose.local.yml build --no-cache {{args}}
 
-# up: Start up containers.
-up:
-    @echo "Starting up containers..."
-    @docker compose up -d --remove-orphans
+# build-prod: Build production containers
+build-prod *args:
+	@docker compose -f docker-compose.production.yml build --no-cache {{args}}
+
+# build-docs: Build docs containers
+build-docs *args:
+	@docker compose -f docker-compose.docs.yml build --no-cache {{args}}
+
+# up-local: Start local containers
+up-local:
+    @docker compose -f docker-compose.local.yml up -d --remove-orphans
+
+# up-prod: Start production containers
+up-prod:
+    @docker compose -f docker-compose.production.yml up -d --remove-orphans
+
+# up-docs: Start docs containers
+up-docs:
+    @docker compose -f docker-compose.docs.yml up -d --remove-orphans
 
 # down: Stop containers.
 down:
@@ -43,3 +57,9 @@ logs *args:
 # manage: Executes `manage.py` command.
 manage +args:
     @docker compose run --rm django python ./manage.py {{args}}
+
+# Экспортируем зависимости из poetry в requirements/
+export-reqs:
+    poetry export -f requirements.txt --without-hashes --without dev --without prod -o requirements/base.txt
+    poetry export -f requirements.txt --without-hashes --with prod -o requirements/production.txt
+    poetry export -f requirements.txt --without-hashes --with dev --with prod -o requirements/local.txt
