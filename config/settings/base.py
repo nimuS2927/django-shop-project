@@ -84,6 +84,8 @@ THIRD_PARTY_APPS = [
     "corsheaders",
     "drf_spectacular",
     "shop.apps.ShopConfig",
+    "django_filters",
+    "mptt",
 ]
 
 LOCAL_APPS = [
