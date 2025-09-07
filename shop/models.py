@@ -8,6 +8,7 @@ from mptt.models import TreeForeignKey
 
 User = get_user_model()
 MAX_DESCRIPTION_LENGTH = 50
+ATTR_ERR_MSG = "Модель не имеет необходимых полей count и price"
 
 
 class TimestampMixin(models.Model):
@@ -23,6 +24,13 @@ class IDMixin(models.Model):
 
     class Meta:
         abstract = True
+
+
+class TotalPriceMixin:
+    def total_price(self):
+        if hasattr(self, "count") and hasattr(self, "price"):
+            return self.count * self.price
+        raise AttributeError(ATTR_ERR_MSG)
 
 
 class Category(IDMixin, TimestampMixin, MPTTModel):
@@ -247,7 +255,7 @@ class Basket(IDMixin, TimestampMixin, models.Model):
         return f"Корзина {self.user}"
 
 
-class BasketItem(IDMixin, TimestampMixin, models.Model):
+class BasketItem(IDMixin, TimestampMixin, models.Model, TotalPriceMixin):
     basket = models.ForeignKey(
         Basket,
         on_delete=models.CASCADE,
@@ -267,6 +275,74 @@ class BasketItem(IDMixin, TimestampMixin, models.Model):
         unique_together = ("basket", "product")
         verbose_name = "Элемент корзины"
         verbose_name_plural = "Элементы корзины"
+
+    def __str__(self):
+        return f"{self.product} x {self.count}"
+
+
+class OrderStatus(models.TextChoices):
+    CREATED = "оформлен"
+    PAID = "оплачен"
+    COMPLETED = "завершен"
+    CANCELLED = "отменен"
+
+
+class Order(IDMixin, TimestampMixin, models.Model):
+    user = models.ForeignKey(
+        User,
+        null=False,
+        on_delete=models.CASCADE,
+        related_name="Пользователь",
+    )
+    status = models.CharField(
+        max_length=16,
+        choices=OrderStatus,
+        default=OrderStatus.CREATED,
+        verbose_name="Статус заказа",
+    )
+
+    class Meta:
+        verbose_name = "Заказ"
+        verbose_name_plural = "Заказы"
+
+    def __str__(self):
+        return f"Пользователь {self.user} / Заказ ID - {self.id} "
+
+    def total_cost(self):
+        return sum([i.total_price for i in self.items])
+
+    def set_status(self, status: OrderStatus) -> None:
+        self.status = status
+        self.save()
+
+    def mark_paid(self):
+        self.set_status(OrderStatus.PAID)
+
+    def mark_completed(self):
+        self.set_status(OrderStatus.COMPLETED)
+
+    def mark_cancelled(self):
+        self.set_status(OrderStatus.CANCELLED)
+
+
+class OrderItem(IDMixin, TimestampMixin, models.Model, TotalPriceMixin):
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="items",
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="order_items",
+    )
+    count = models.PositiveSmallIntegerField(default=1)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        unique_together = ("order", "product")
+        verbose_name = "Элемент заказа"
+        verbose_name_plural = "Элементы заказа"
 
     def __str__(self):
         return f"{self.product} x {self.count}"
