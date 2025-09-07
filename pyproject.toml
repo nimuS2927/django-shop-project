@@ -31,6 +31,8 @@ django-crispy-forms = "2.4"
 crispy-bootstrap5 = "2025.6"
 django-compressor = "4.5.1"
 django-redis = "6.0.0"
+django-mptt = "^0.18.0"
+django-filter = "^25.1"
 
 # Django REST Framework
 djangorestframework = "3.16.1"
