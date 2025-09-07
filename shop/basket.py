@@ -56,7 +56,9 @@ class SessionBasket:
         self.save()
 
     def get_total_price(self):
-        return sum(Decimal(item["price"]) for item in self.basket.values())
+        return sum(
+            Decimal(item["price"]) * item["count"] for item in self.basket.values()
+        )
 
     def clear(self):
         del self.session[settings.BASKET_SESSION_ID]
