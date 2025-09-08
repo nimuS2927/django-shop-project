@@ -168,7 +168,7 @@ class Product(IDMixin, TimestampMixin, ShortDescriptionMixin, models.Model):
         self.save()
         return self.available
 
-    def get_tags_dict(self):
+    def get_tags_list(self):
         return list(self.tags.name)
 
     def get_images(self):
