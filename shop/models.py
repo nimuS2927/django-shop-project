@@ -8,7 +8,7 @@ from mptt.models import TreeForeignKey
 
 User = get_user_model()
 MAX_DESCRIPTION_LENGTH = 50
-ATTR_ERR_MSG = "Модель не имеет необходимых полей count и price"
+ATTR_ERR_MSG = "Модель не имеет необходимых полей"
 
 
 class TimestampMixin(models.Model):
@@ -29,8 +29,35 @@ class IDMixin(models.Model):
 class TotalPriceMixin:
     def total_price(self):
         if hasattr(self, "count") and hasattr(self, "price"):
-            return self.count * self.price
+            if self.count and self.price:
+                return self.count * self.price
+            return "-"
         raise AttributeError(ATTR_ERR_MSG)
+
+    total_price.short_description = "Сумма"
+
+
+class TotalCostMixin:
+    def total_cost(self):
+        if hasattr(self, "items"):
+            items = self.items.all()
+            if items and len(items) > 0:
+                return sum([i.total_price() for i in items])
+            return "-"
+        raise AttributeError(ATTR_ERR_MSG)
+
+    total_cost.short_description = "Общая сумма заказа"
+
+
+class ShortDescriptionMixin:
+    def get_short_description(self):
+        if hasattr(self, "description"):
+            if len(self.description) > MAX_DESCRIPTION_LENGTH:
+                return self.description[:MAX_DESCRIPTION_LENGTH] + "..."
+            return self.description
+        raise AttributeError(ATTR_ERR_MSG)
+
+    get_short_description.short_description = "Краткое описание"
 
 
 class Category(IDMixin, TimestampMixin, MPTTModel):
@@ -48,9 +75,11 @@ class Category(IDMixin, TimestampMixin, MPTTModel):
         verbose_name="Родительская категория",
     )
 
-    class MPTTMeta:
+    class Meta:
         verbose_name = "Категория"
         verbose_name_plural = "Категории"
+
+    class MPTTMeta:
         order_insertion_by = ["title"]
 
     def __str__(self):
@@ -81,11 +110,16 @@ class ImageCategory(IDMixin, TimestampMixin, models.Model):
         verbose_name="Категория",
     )
 
+    class Meta:
+        verbose_name = "Изображение категории"
+        verbose_name_plural = "Изображения категорий"
+        ordering = ["category__title"]
+
     def __str__(self):
         return str(self.src)
 
 
-class Product(IDMixin, TimestampMixin, models.Model):
+class Product(IDMixin, TimestampMixin, ShortDescriptionMixin, models.Model):
     category = models.ForeignKey(
         Category,
         on_delete=models.CASCADE,
@@ -101,15 +135,25 @@ class Product(IDMixin, TimestampMixin, models.Model):
     count = models.PositiveSmallIntegerField(
         blank=True,
         default=1,
+        verbose_name="Количество на складе",
     )
     title = models.CharField(
         max_length=100,
         blank=False,
         verbose_name="Название",
     )
-    description = models.TextField(blank=True)
-    available = models.BooleanField(default=True)
-    quantity_sold = models.SmallIntegerField(default=0)
+    description = models.TextField(
+        blank=True,
+        verbose_name="Описание",
+    )
+    available = models.BooleanField(
+        default=True,
+        verbose_name="Доступно к продаже",
+    )
+    quantity_sold = models.SmallIntegerField(
+        default=0,
+        verbose_name="Всего продано",
+    )
 
     class Meta:
         verbose_name = "Товар"
@@ -118,11 +162,6 @@ class Product(IDMixin, TimestampMixin, models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.price} Руб."
-
-    def get_short_description(self):
-        if len(self.description) > MAX_DESCRIPTION_LENGTH:
-            return self.description[:MAX_DESCRIPTION_LENGTH] + "..."
-        return self.description
 
     def get_available(self):
         self.available = self.count > 0
@@ -146,9 +185,10 @@ class Product(IDMixin, TimestampMixin, models.Model):
         Возвращает цену с учётом активных акций.
         """
         price = self.price
-        for promo in self.promotions.all():
-            price = promo.apply_price_with_discount(price)
-        return price
+        prices_with_discount = [
+            promo.apply_price_with_discount(price) for promo in self.promotions.all()
+        ]
+        return min(prices_with_discount)
 
 
 def path_to_product_image(instance: "ImageProduct", filename: str) -> str:
@@ -175,6 +215,11 @@ class ImageProduct(IDMixin, TimestampMixin, models.Model):
         verbose_name="Продукты",
     )
 
+    class Meta:
+        verbose_name = "Изображения продукта"
+        verbose_name_plural = "Изображения продуктов"
+        ordering = ["product__title"]
+
     def __str__(self):
         return str(self.src)
 
@@ -193,11 +238,64 @@ class Tag(IDMixin, TimestampMixin, models.Model):
         return self.name
 
 
-class Promotion(IDMixin, TimestampMixin, models.Model):
+class PromotionProduct(IDMixin, TimestampMixin, models.Model):
+    promotion = models.ForeignKey(
+        "Promotion",
+        on_delete=models.CASCADE,
+        verbose_name="Акция",
+    )
+    product = models.ForeignKey(
+        "Product",
+        on_delete=models.CASCADE,
+        verbose_name="Товар",
+    )
+    limit = models.SmallIntegerField(
+        verbose_name="Лимит продаж по акции",
+        default=None,
+        blank=True,
+        null=True,
+    )
+    quantity_sold = models.SmallIntegerField(
+        default=0,
+        verbose_name="Всего продано по акции",
+    )
+    price_with_discount = models.DecimalField(
+        verbose_name="Цена в акции",
+        max_digits=10,
+        decimal_places=2,
+        null=False,
+        blank=True,
+    )
+
+    class Meta:
+        unique_together = ("promotion", "product")
+        verbose_name = "Товар в акции"
+        verbose_name_plural = "Товары в акции"
+
+    def __str__(self):
+        return f"{self.product} в {self.promotion}"
+
+    def save(self, *args, **kwargs):
+        if self.price_with_discount in [None, ""]:
+            self.price_with_discount = self.promotion.apply_price_with_discount(
+                self.product.price
+            )
+        super().save(*args, **kwargs)
+
+    def available_for_sale(self):
+        return (
+            999  # Продажа не ограничена
+            if self.limit in [None, 0]
+            else self.limit - self.quantity_sold
+        )
+
+
+class Promotion(IDMixin, TimestampMixin, ShortDescriptionMixin, models.Model):
     title = models.CharField(verbose_name="Название акции", max_length=255)
     description = models.TextField(verbose_name="Описание", blank=True)
     products = models.ManyToManyField(
         "Product",
+        through="PromotionProduct",
         related_name="promotions",
         verbose_name="Товары",
     )
@@ -233,7 +331,7 @@ class Promotion(IDMixin, TimestampMixin, models.Model):
         return price
 
 
-class Basket(IDMixin, TimestampMixin, models.Model):
+class Basket(IDMixin, TimestampMixin, models.Model, TotalCostMixin):
     """
     Класс описывающий корзину, используется только для авторизованных пользователей
     """
@@ -269,7 +367,13 @@ class BasketItem(IDMixin, TimestampMixin, models.Model, TotalPriceMixin):
         verbose_name="Товар",
     )
     count = models.PositiveIntegerField(default=1)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=False,
+        verbose_name="Цена",
+    )
 
     class Meta:
         unique_together = ("basket", "product")
@@ -279,6 +383,11 @@ class BasketItem(IDMixin, TimestampMixin, models.Model, TotalPriceMixin):
     def __str__(self):
         return f"{self.product} x {self.count}"
 
+    def save(self, *args, **kwargs):
+        if self.price in [None, ""]:
+            self.price = self.product.get_price_with_promotions()
+        super().save(*args, **kwargs)
+
 
 class OrderStatus(models.TextChoices):
     CREATED = "оформлен"
@@ -287,12 +396,13 @@ class OrderStatus(models.TextChoices):
     CANCELLED = "отменен"
 
 
-class Order(IDMixin, TimestampMixin, models.Model):
+class Order(IDMixin, TimestampMixin, models.Model, TotalCostMixin):
     user = models.ForeignKey(
         User,
         null=False,
         on_delete=models.CASCADE,
-        related_name="Пользователь",
+        related_name="orders",
+        verbose_name="Пользователь",
     )
     status = models.CharField(
         max_length=16,
@@ -307,9 +417,6 @@ class Order(IDMixin, TimestampMixin, models.Model):
 
     def __str__(self):
         return f"Пользователь {self.user} / Заказ ID - {self.id} "
-
-    def total_cost(self):
-        return sum([i.total_price for i in self.items])
 
     def set_status(self, status: OrderStatus) -> None:
         self.status = status
@@ -330,14 +437,25 @@ class OrderItem(IDMixin, TimestampMixin, models.Model, TotalPriceMixin):
         Order,
         on_delete=models.CASCADE,
         related_name="items",
+        verbose_name="Заказ",
     )
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
         related_name="order_items",
+        verbose_name="Товар",
     )
-    count = models.PositiveSmallIntegerField(default=1)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    count = models.PositiveSmallIntegerField(
+        default=1,
+        verbose_name="Количество",
+    )
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=False,
+        verbose_name="Цена",
+    )
 
     class Meta:
         unique_together = ("order", "product")
@@ -346,3 +464,8 @@ class OrderItem(IDMixin, TimestampMixin, models.Model, TotalPriceMixin):
 
     def __str__(self):
         return f"{self.product} x {self.count}"
+
+    def save(self, *args, **kwargs):
+        if self.price in [None, ""]:
+            self.price = self.product.get_price_with_promotions()
+        super().save(*args, **kwargs)
