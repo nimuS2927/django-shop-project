@@ -81,6 +81,14 @@ class ImageCategoryAdmin(admin.ModelAdmin):
     )
 
 
+class TagProductInline(admin.TabularInline):
+    model = Tag.products.through
+    fields = ("tag",)
+    extra = 1
+    verbose_name = "Тег"
+    verbose_name_plural = "Теги"
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = (
@@ -91,6 +99,7 @@ class ProductAdmin(admin.ModelAdmin):
         "quantity_sold",
         "available",
         "get_short_description",
+        "get_tags_list",
     )
     list_display_links = "id", "title"
     ordering = (
@@ -102,6 +111,7 @@ class ProductAdmin(admin.ModelAdmin):
         "title",
         "get_short_description",
     )
+    inlines = [TagProductInline]
 
 
 @admin.register(ImageProduct)
@@ -159,7 +169,7 @@ class PromotionAdmin(admin.ModelAdmin):
     inlines = [PromotionProductInline]
 
 
-class ProductInline(admin.TabularInline):
+class ProductTagInline(admin.TabularInline):
     model = Tag.products.through
     extra = 1
     fields = ("product",)
@@ -173,4 +183,4 @@ class TagAdmin(admin.ModelAdmin):
     list_display_links = "id", "name"
     ordering = ("name",)
     search_fields = ("name",)
-    inlines = [ProductInline]
+    inlines = [ProductTagInline]
