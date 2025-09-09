@@ -1,0 +1,44 @@
+<div>
+  <label>
+    Мин. цена:
+    <input id="min_price_range"
+           type="range"
+           min="0"
+           max="100000"
+           step="1"
+           value="{{ request.GET.min_price|default:0 }}"
+           oninput="syncMinInputs(this.value)" />
+  </label>
+  <input id="min_price_input"
+         type="number"
+         min="0"
+         max="100000"
+         step="1"
+         value="{{ request.GET.min_price|default:0 }}"
+         oninput="syncMinInputs(this.value)"
+         onfocus="selectAll(this)"
+         onclick="selectAll(this)"
+         onmouseup="return false;"
+         onkeydown="if(event.key==='Enter'){applyFilters();}" />
+  <span id="min_price_val">{{ request.GET.min_price|default:0 }}</span>
+</div>
+<script>
+  function syncMinInputs(value) {
+    AdminFilters.syncInputs('min_price', value);
+  }
+
+  function selectAll(el) {
+    AdminFilters.selectAll(el);
+  }
+
+  function applyFilters() {
+    AdminFilters.applyFilters();
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    const url = new URL(window.location.href);
+    const param = url.searchParams.get('min_price');
+    if (param !== null && param !== '') {
+      syncMinInputs(param);
+    }
+  });
+</script>

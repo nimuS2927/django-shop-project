@@ -1,0 +1,52 @@
+<div>
+  <label>
+    Макс. цена:
+    <input id="max_price_range"
+           type="range"
+           min="0"
+           max="100000"
+           step="1"
+           value="{{ request.GET.max_price|default:100000 }}"
+           oninput="syncMaxInputs(this.value)" />
+  </label>
+  <input id="max_price_input"
+         type="number"
+         min="0"
+         max="100000"
+         step="1"
+         value="{{ request.GET.max_price|default:100000 }}"
+         oninput="syncMaxInputs(this.value)"
+         onfocus="selectAll(this)"
+         onclick="selectAll(this)"
+         onmouseup="return false;"
+         onkeydown="if(event.key==='Enter'){applyFilters();}" />
+  <span id="max_price_val">{{ request.GET.max_price|default:100000 }}</span>
+</div>
+<div class="admin-filter-actions">
+  <button type="button" onclick="applyFilters()">Фильтровать</button>
+  <button type="button" onclick="resetMax()">Сбросить</button>
+</div>
+<script>
+  function syncMaxInputs(value) {
+    AdminFilters.syncInputs('max_price', value);
+  }
+
+  function selectAll(el) {
+    AdminFilters.selectAll(el);
+  }
+
+  function applyFilters() {
+    AdminFilters.applyFilters();
+  }
+
+  function resetMax() {
+    AdminFilters.resetMax();
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    const url = new URL(window.location.href);
+    const param = url.searchParams.get('max_price');
+    if (param !== null && param !== '') {
+      syncMaxInputs(param);
+    }
+  });
+</script>
