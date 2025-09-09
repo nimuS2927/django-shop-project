@@ -1,5 +1,7 @@
 from django.contrib import admin
 
+from shop.admin_filter import MaxPriceFilter
+from shop.admin_filter import MinPriceFilter
 from shop.models import Basket
 from shop.models import BasketItem
 from shop.models import Category
@@ -111,7 +113,9 @@ class ProductAdmin(admin.ModelAdmin):
         "title",
         "get_short_description",
     )
+    list_filter = (MinPriceFilter, MaxPriceFilter, "available")
     inlines = [TagProductInline]
+    radio_fields = {"category": admin.VERTICAL}
 
 
 @admin.register(ImageProduct)
