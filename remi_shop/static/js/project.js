@@ -29,6 +29,7 @@ window.AdminFilters = (function() {
 	function resetMax() {
 		const url = new URL(window.location.href);
 		url.searchParams.delete('max_price');
+		url.searchParams.delete('min_price');
 		window.location.href = url.toString();
 	}
 
