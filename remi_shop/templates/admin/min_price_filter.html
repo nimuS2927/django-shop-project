@@ -1,3 +1,5 @@
+{% load static %}
+
 <div>
   <label>
     Мин. цена:
@@ -22,6 +24,7 @@
          onkeydown="if(event.key==='Enter'){applyFilters();}" />
   <span id="min_price_val">{{ request.GET.min_price|default:0 }}</span>
 </div>
+<script src="{% static 'js/project.js' %}"></script>
 <script>
   function syncMinInputs(value) {
     AdminFilters.syncInputs('min_price', value);

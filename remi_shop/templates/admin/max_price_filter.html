@@ -1,3 +1,5 @@
+{% load static %}
+
 <div>
   <label>
     Макс. цена:
@@ -26,6 +28,7 @@
   <button type="button" onclick="applyFilters()">Фильтровать</button>
   <button type="button" onclick="resetMax()">Сбросить</button>
 </div>
+<script src="{% static 'js/project.js' %}"></script>
 <script>
   function syncMaxInputs(value) {
     AdminFilters.syncInputs('max_price', value);
