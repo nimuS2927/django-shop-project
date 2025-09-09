@@ -169,7 +169,11 @@ class Product(IDMixin, TimestampMixin, ShortDescriptionMixin, models.Model):
         return self.available
 
     def get_tags_list(self):
-        return list(self.tags.name)
+        if self.tags is not None:
+            return list(self.tags.all())
+        return []
+
+    get_tags_list.short_description = "Список тегов"
 
     def get_images(self):
         return [
