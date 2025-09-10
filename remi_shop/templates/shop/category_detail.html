@@ -1,0 +1,155 @@
+{% extends 'shop/base.html' %}
+
+{% load static %}
+
+{% block breadcrumbs %}
+  <li class="breadcrumb-item active">{{ category.title }}</li>
+{% endblock breadcrumbs %}
+{% block shop_content %}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{{ category.title }}</h1>
+    {% if user.is_authenticated %}
+      <div class="btn-group" role="group">
+        <a href="{% url 'shop:category_update' category.pk %}"
+           class="btn btn-outline-secondary">
+          <i class="fas fa-edit"></i> Редактировать
+        </a>
+        <a href="{% url 'shop:category_delete' category.pk %}"
+           class="btn btn-outline-danger">
+          <i class="fas fa-trash"></i> Удалить
+        </a>
+      </div>
+    {% endif %}
+  </div>
+  <!-- Category Image -->
+  {% if category.image %}
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <img src="{{ category.image.src.url }}"
+             class="img-fluid rounded"
+             alt="{{ category.image.alt }}" />
+      </div>
+    </div>
+  {% endif %}
+  <!-- Subcategories -->
+  {% if subcategories %}
+    <div class="mb-4">
+      <h4 class="h5 mb-3">Подкатегории</h4>
+      <div class="row">
+        {% for subcategory in subcategories %}
+          <div class="col-md-4 col-lg-3 mb-3">
+            <div class="card h-100">
+              <div class="card-body">
+                <h6 class="card-title">
+                  <a href="{% url 'shop:category_detail' subcategory.pk %}"
+                     class="text-decoration-none">{{ subcategory.title }}</a>
+                </h6>
+                <p class="text-muted small mb-0">
+                  <i class="fas fa-box"></i> {{ subcategory.products.count }} товаров
+                </p>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+  <!-- Products -->
+  <div class="mb-4">
+    <h4 class="h5 mb-3">Товары в категории</h4>
+    {% if products %}
+      <div class="product-grid">
+        {% for product in products %}
+          <div class="product-card">
+            {% if product.images.first %}
+              <img src="{{ product.images.first.src.url }}"
+                   class="product-image"
+                   alt="{{ product.images.first.alt }}" />
+            {% else %}
+              <div class="product-image bg-light d-flex align-items-center justify-content-center">
+                <i class="fas fa-image fa-2x text-muted"></i>
+              </div>
+            {% endif %}
+            <div class="product-info">
+              <h5 class="product-title">
+                <a href="{% url 'shop:product_detail' product.pk %}"
+                   class="text-decoration-none">{{ product.title }}</a>
+              </h5>
+              {% if product.description %}<p class="product-description">{{ product.description|truncatewords:15 }}</p>{% endif %}
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="product-price">{{ product.price }} руб.</span>
+                {% if not product.available %}<span class="badge bg-danger">Нет в наличии</span>{% endif %}
+              </div>
+              {% if product.tags.exists %}
+                <div class="mb-2">
+                  {% for tag in product.tags.all|slice:":3" %}
+                    <span class="badge bg-light text-dark me-1">{{ tag.name }}</span>
+                  {% endfor %}
+                </div>
+              {% endif %}
+              <div class="product-actions">
+                <a href="{% url 'shop:product_detail' product.pk %}"
+                   class="btn btn-primary btn-sm">
+                  <i class="fas fa-eye"></i> Подробнее
+                </a>
+                {% if product.available and user.is_authenticated %}
+                  <button class="btn btn-success btn-sm add-to-basket"
+                          data-product-id="{{ product.pk }}">
+                    <i class="fas fa-cart-plus"></i> В корзину
+                  </button>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <!-- Pagination for products -->
+      {% if products.has_other_pages %}
+        <nav aria-label="Навигация по товарам">
+          <ul class="pagination justify-content-center">
+            {% if products.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page=1">« Первая</a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ products.previous_page_number }}">Предыдущая</a>
+              </li>
+            {% endif %}
+            {% for num in products.paginator.page_range %}
+              {% if products.number == num %}
+                <li class="page-item active">
+                  <span class="page-link">{{ num }}</span>
+                </li>
+              {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+              {% endif %}
+            {% endfor %}
+            {% if products.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ products.next_page_number }}">Следующая</a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ products.paginator.num_pages }}">Последняя »</a>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    {% else %}
+      <div class="text-center py-5">
+        <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
+        <h5 class="text-muted">Товары не найдены</h5>
+        <p class="text-muted">В этой категории пока нет товаров.</p>
+      </div>
+    {% endif %}
+  </div>
+  <!-- Back to categories -->
+  <div class="mt-4">
+    <a href="{% url 'shop:category_list' %}"
+       class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left"></i> Назад к категориям
+    </a>
+  </div>
+{% endblock shop_content %}
