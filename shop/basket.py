@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 from django.contrib.auth.signals import user_logged_out
 from django.db.models.query import Prefetch
+from django.http import HttpRequest
 from rest_framework.request import Request
 
 from shop.models import Basket
@@ -12,7 +13,7 @@ from shop.models import Product
 
 
 class SessionBasket:
-    def __init__(self, request: Request):
+    def __init__(self, request: Request | HttpRequest):
         self.session = request.session
         basket = self.session.get(settings.BASKET_SESSION_ID)
         if not basket:
