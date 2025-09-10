@@ -1,0 +1,155 @@
+{% extends 'shop/base.html' %}
+
+{% load static %}
+
+{% block breadcrumbs %}
+  <li class="breadcrumb-item">
+    <a href="{% url 'shop:order_list' %}">Мои заказы</a>
+  </li>
+  <li class="breadcrumb-item active">Заказ #{{ order.id }}</li>
+{% endblock breadcrumbs %}
+{% block shop_content %}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Заказ #{{ order.id }}</h1>
+    <span class="order-status status-{{ order.status }}">{{ order.get_status_display }}</span>
+  </div>
+  <div class="row">
+    <div class="col-md-8">
+      <!-- Order Items -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Товары в заказе</h5>
+        </div>
+        <div class="card-body">
+          {% for item in order.items.all %}
+            <div class="order-item">
+              <div class="row align-items-center">
+                <div class="col-md-2">
+                  {% if item.product.images.first %}
+                    <img src="{{ item.product.images.first.src.url }}"
+                         class="img-fluid rounded order-product-img"
+                         alt="{{ item.product.images.first.alt }}" />
+                  {% else %}
+                    <div class="bg-light d-flex align-items-center justify-content-center rounded order-product-placeholder">
+                      <i class="fas fa-image text-muted"></i>
+                    </div>
+                  {% endif %}
+                </div>
+                <div class="col-md-6">
+                  <h6 class="mb-1">
+                    <a href="{% url 'shop:product_detail' item.product.pk %}"
+                       class="text-decoration-none">{{ item.product.title }}</a>
+                  </h6>
+                  <p class="text-muted small mb-0">{{ item.product.category.title }}</p>
+                </div>
+                <div class="col-md-2 text-center">
+                  <span class="fw-bold">{{ item.count }} шт.</span>
+                </div>
+                <div class="col-md-2 text-end">
+                  <div class="fw-bold">{{ item.total_price }} руб.</div>
+                  <small class="text-muted">{{ item.price }} руб./шт.</small>
+                </div>
+              </div>
+            </div>
+            {% if not forloop.last %}<hr />{% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      <!-- Order Timeline -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">История заказа</h5>
+        </div>
+        <div class="card-body">
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-marker bg-primary"></div>
+              <div class="timeline-content">
+                <h6 class="mb-1">Заказ создан</h6>
+                <small class="text-muted">{{ order.created_at|date:"d.m.Y H:i" }}</small>
+              </div>
+            </div>
+            {% if order.status != 'оформлен' %}
+              <div class="timeline-item">
+                <div class="timeline-marker bg-success"></div>
+                <div class="timeline-content">
+                  <h6 class="mb-1">Заказ оплачен</h6>
+                  <small class="text-muted">Дата оплаты будет указана после реализации</small>
+                </div>
+              </div>
+            {% endif %}
+            {% if order.status == 'завершен' %}
+              <div class="timeline-item">
+                <div class="timeline-marker bg-success"></div>
+                <div class="timeline-content">
+                  <h6 class="mb-1">Заказ завершен</h6>
+                  <small class="text-muted">Заказ успешно выполнен</small>
+                </div>
+              </div>
+            {% elif order.status == 'отменен' %}
+              <div class="timeline-item">
+                <div class="timeline-marker bg-danger"></div>
+                <div class="timeline-content">
+                  <h6 class="mb-1">Заказ отменен</h6>
+                  <small class="text-muted">Заказ был отменен</small>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <!-- Order Summary -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Информация о заказе</h5>
+        </div>
+        <div class="card-body">
+          <div class="row mb-2">
+            <div class="col-6">
+              <strong>Номер заказа:</strong>
+            </div>
+            <div class="col-6">#{{ order.id }}</div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-6">
+              <strong>Дата создания:</strong>
+            </div>
+            <div class="col-6">{{ order.created_at|date:"d.m.Y H:i" }}</div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-6">
+              <strong>Статус:</strong>
+            </div>
+            <div class="col-6">
+              <span class="order-status status-{{ order.status }}">{{ order.get_status_display }}</span>
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-6">
+              <strong>Товаров:</strong>
+            </div>
+            <div class="col-6">{{ order.items.count }} шт.</div>
+          </div>
+          <hr />
+          <div class="row">
+            <div class="col-6">
+              <strong>Общая сумма:</strong>
+            </div>
+            <div class="col-6 fw-bold text-success">{{ order.total_cost }} руб.</div>
+          </div>
+        </div>
+      </div>
+      <!-- Actions -->
+      <div class="d-grid gap-2">
+        <a href="{% url 'shop:order_list' %}" class="btn btn-outline-secondary">
+          <i class="fas fa-arrow-left"></i> Назад к заказам
+        </a>
+        <a href="{% url 'shop:product_list' %}" class="btn btn-primary">
+          <i class="fas fa-shopping-bag"></i> Продолжить покупки
+        </a>
+      </div>
+    </div>
+  </div>
+{% endblock shop_content %}
