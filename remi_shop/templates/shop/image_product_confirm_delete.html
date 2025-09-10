@@ -1,0 +1,43 @@
+{% extends 'shop/base.html' %}
+
+{% load static %}
+
+{% block breadcrumbs %}
+  <li class="breadcrumb-item">
+    <a href="{% url 'shop:product_list' %}">Товары</a>
+  </li>
+  <li class="breadcrumb-item active">Удалить изображение</li>
+{% endblock breadcrumbs %}
+{% block shop_content %}
+  <div class="form-container">
+    <h2 class="form-title text-danger">
+      <i class="fas fa-exclamation-triangle"></i> Удаление изображения
+    </h2>
+    <div class="alert alert-warning" role="alert">
+      <h5 class="alert-heading">Внимание!</h5>
+      <p>
+        Вы собираетесь удалить изображение для товара <strong>"{{ object.product.title }}"</strong>.
+      </p>
+    </div>
+    <!-- Image preview -->
+    {% if object.src %}
+      <div class="text-center mb-4">
+        <img src="{{ object.src.url }}"
+             class="img-fluid rounded delete-product-preview-img"
+             alt="{{ object.alt }}" />
+        <p class="text-muted mt-2">{{ object.alt }}</p>
+      </div>
+    {% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-actions d-flex justify-content-between">
+        <a href="{% url 'shop:product_list' %}" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> Отмена
+        </a>
+        <button type="submit" class="btn btn-danger">
+          <i class="fas fa-trash"></i> Удалить изображение
+        </button>
+      </div>
+    </form>
+  </div>
+{% endblock shop_content %}
