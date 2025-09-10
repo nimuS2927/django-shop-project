@@ -1,0 +1,121 @@
+{% extends 'shop/base.html' %}
+
+{% load static %}
+
+{% block breadcrumbs %}
+  <li class="breadcrumb-item active">{{ tag.name }}</li>
+{% endblock breadcrumbs %}
+{% block shop_content %}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{{ tag.name }}</h1>
+    {% if user.is_authenticated %}
+      <div class="btn-group" role="group">
+        <a href="{% url 'shop:tag_update' tag.pk %}"
+           class="btn btn-outline-secondary">
+          <i class="fas fa-edit"></i> Редактировать
+        </a>
+        <a href="{% url 'shop:tag_delete' tag.pk %}"
+           class="btn btn-outline-danger">
+          <i class="fas fa-trash"></i> Удалить
+        </a>
+      </div>
+    {% endif %}
+  </div>
+  <!-- Products -->
+  <div class="mb-4">
+    <h4 class="h5 mb-3">Товары отмеченные тегом</h4>
+    {% if products %}
+      <div class="product-grid">
+        {% for product in products %}
+          <div class="product-card">
+            {% if product.images.first %}
+              <img src="{{ product.images.first.src.url }}"
+                   class="product-image"
+                   alt="{{ product.images.first.alt }}" />
+            {% else %}
+              <div class="product-image bg-light d-flex align-items-center justify-content-center">
+                <i class="fas fa-image fa-2x text-muted"></i>
+              </div>
+            {% endif %}
+            <div class="product-info">
+              <h5 class="product-title">
+                <a href="{% url 'shop:product_detail' product.pk %}"
+                   class="text-decoration-none">{{ product.title }}</a>
+              </h5>
+              {% if product.description %}<p class="product-description">{{ product.description|truncatewords:15 }}</p>{% endif %}
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="product-price">{{ product.price }} руб.</span>
+                {% if not product.available %}<span class="badge bg-danger">Нет в наличии</span>{% endif %}
+              </div>
+              {% if product.tags.exists %}
+                <div class="mb-2">
+                  {% for tag in product.tags.all|slice:":3" %}
+                    <span class="badge bg-light text-dark me-1">{{ tag.name }}</span>
+                  {% endfor %}
+                </div>
+              {% endif %}
+              <div class="product-actions">
+                <a href="{% url 'shop:product_detail' product.pk %}"
+                   class="btn btn-primary btn-sm">
+                  <i class="fas fa-eye"></i> Подробнее
+                </a>
+                {% if product.available and user.is_authenticated %}
+                  <button class="btn btn-success btn-sm add-to-basket"
+                          data-product-id="{{ product.pk }}">
+                    <i class="fas fa-cart-plus"></i> В корзину
+                  </button>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <!-- Pagination for products -->
+      {% if products.has_other_pages %}
+        <nav aria-label="Навигация по товарам">
+          <ul class="pagination justify-content-center">
+            {% if products.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page=1">« Первая</a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ products.previous_page_number }}">Предыдущая</a>
+              </li>
+            {% endif %}
+            {% for num in products.paginator.page_range %}
+              {% if products.number == num %}
+                <li class="page-item active">
+                  <span class="page-link">{{ num }}</span>
+                </li>
+              {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+              {% endif %}
+            {% endfor %}
+            {% if products.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ products.next_page_number }}">Следующая</a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ products.paginator.num_pages }}">Последняя »</a>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    {% else %}
+      <div class="text-center py-5">
+        <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
+        <h5 class="text-muted">Товары не найдены</h5>
+        <p class="text-muted">Товары данным тегом пока не отмечены.</p>
+      </div>
+    {% endif %}
+  </div>
+  <!-- Back to categories -->
+  <div class="mt-4">
+    <a href="{% url 'shop:tag_list' %}" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left"></i> Назад к списку тегов
+    </a>
+  </div>
+{% endblock shop_content %}
