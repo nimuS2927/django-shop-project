@@ -1,0 +1,184 @@
+{% extends 'shop/base.html' %}
+
+{% load static %}
+
+{% block breadcrumbs %}
+  <li class="breadcrumb-item">
+    <a href="{% url 'shop:product_list' %}">Товары</a>
+  </li>
+  <li class="breadcrumb-item">
+    <a href="{% url 'shop:category_detail' product.category.pk %}">{{ product.category.title }}</a>
+  </li>
+  <li class="breadcrumb-item active">{{ product.title }}</li>
+{% endblock breadcrumbs %}
+{% block shop_content %}
+  <div class="row">
+    <!-- Product Images -->
+    <div class="col-md-6">
+      {% if product.images.exists %}
+        <div id="productCarousel"
+             class="carousel slide product-carousel"
+             data-bs-ride="carousel">
+          <div class="carousel-inner">
+            {% for image in product.images.all %}
+              <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <img src="{{ image.src.url }}"
+                     class="d-block w-100 rounded"
+                     alt="{{ image.alt }}" />
+              </div>
+            {% endfor %}
+          </div>
+          {% if product.images.count > 1 %}
+            <button class="carousel-control-prev"
+                    type="button"
+                    data-bs-target="#productCarousel"
+                    data-bs-slide="prev">
+              <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next"
+                    type="button"
+                    data-bs-target="#productCarousel"
+                    data-bs-slide="next">
+              <span class="carousel-control-next-icon"></span>
+            </button>
+          {% endif %}
+        </div>
+      {% else %}
+        <div class="bg-light d-flex align-items-center justify-content-center rounded product-placeholder">
+          <i class="fas fa-image fa-4x text-muted"></i>
+        </div>
+      {% endif %}
+    </div>
+    <!-- Product Info -->
+    <div class="col-md-6">
+      <div class="product-details">
+        <h1 class="h3 mb-3">{{ product.title }}</h1>
+        <!-- Category -->
+        <p class="text-muted mb-3">
+          <i class="fas fa-folder"></i>
+          <a href="{% url 'shop:category_detail' product.category.pk %}"
+             class="text-decoration-none">{{ product.category.title }}</a>
+        </p>
+        <!-- Price -->
+        <div class="price-section mb-4">
+          <span class="h4 text-success">{{ product.price }} руб.</span>
+          {% if product.promotions.exists %}
+            <div class="mt-2">
+              {% for promotion in product.promotions.all %}
+                <span class="badge bg-success me-1">{{ promotion.title }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+        <!-- Availability -->
+        <div class="availability mb-4">
+          {% if product.available %}
+            {% if product.count > 5 %}
+              <span class="badge bg-success">
+                <i class="fas fa-check"></i> В наличии ({{ product.count }} шт.)
+              </span>
+            {% elif product.count > 0 %}
+              <span class="badge bg-warning">
+                <i class="fas fa-exclamation-triangle"></i> Заканчивается ({{ product.count }} шт.)
+              </span>
+            {% else %}
+              <span class="badge bg-danger">
+                <i class="fas fa-times"></i> Нет в наличии
+              </span>
+            {% endif %}
+          {% else %}
+            <span class="badge bg-danger">
+              <i class="fas fa-times"></i> Недоступен
+            </span>
+          {% endif %}
+        </div>
+        <!-- Description -->
+        {% if product.description %}
+          <div class="description mb-4">
+            <h5>Описание</h5>
+            <p>{{ product.description|linebreaks }}</p>
+          </div>
+        {% endif %}
+        <!-- Tags -->
+        {% if product.tags.exists %}
+          <div class="tags mb-4">
+            <h6>Теги:</h6>
+            {% for tag in product.tags.all %}
+              <a href="{% url 'shop:tag_detail' tag.pk %}"
+                 class="badge bg-light text-dark text-decoration-none me-1">{{ tag.name }}</a>
+            {% endfor %}
+          </div>
+        {% endif %}
+        <!-- Actions -->
+        <div class="product-actions">
+          {% if product.available and user.is_authenticated %}
+            <button class="btn btn-success btn-lg add-to-basket"
+                    data-product-id="{{ product.pk }}">
+              <i class="fas fa-cart-plus"></i> Добавить в корзину
+            </button>
+          {% elif not user.is_authenticated %}
+            <a href="{% url 'account_login' %}" class="btn btn-primary btn-lg">
+              <i class="fas fa-sign-in-alt"></i> Войти для покупки
+            </a>
+          {% endif %}
+          {% if user.is_authenticated %}
+            <div class="btn-group mt-2" role="group">
+              <a href="{% url 'shop:product_update' product.pk %}"
+                 class="btn btn-outline-secondary">
+                <i class="fas fa-edit"></i> Редактировать
+              </a>
+              <a href="{% url 'shop:product_delete' product.pk %}"
+                 class="btn btn-outline-danger">
+                <i class="fas fa-trash"></i> Удалить
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Related Products -->
+  {% if related_products %}
+    <div class="mt-5">
+      <h4 class="h5 mb-4">Похожие товары</h4>
+      <div class="row">
+        {% for related_product in related_products %}
+          <div class="col-md-3 col-sm-6 mb-4">
+            <div class="product-card h-100">
+              {% if related_product.images.first %}
+                <img src="{{ related_product.images.first.src.url }}"
+                     class="product-image"
+                     alt="{{ related_product.images.first.alt }}" />
+              {% else %}
+                <div class="product-image bg-light d-flex align-items-center justify-content-center">
+                  <i class="fas fa-image fa-2x text-muted"></i>
+                </div>
+              {% endif %}
+              <div class="product-info">
+                <h6 class="product-title">
+                  <a href="{% url 'shop:product_detail' related_product.pk %}"
+                     class="text-decoration-none">{{ related_product.title }}</a>
+                </h6>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="product-price">{{ related_product.price }} руб.</span>
+                  {% if not related_product.available %}<span class="badge bg-danger small">Нет в наличии</span>{% endif %}
+                </div>
+                <a href="{% url 'shop:product_detail' related_product.pk %}"
+                   class="btn btn-outline-primary btn-sm w-100">
+                  <i class="fas fa-eye"></i> Подробнее
+                </a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+  <!-- Back to products -->
+  <div class="mt-4">
+    <a href="{% url 'shop:product_list' %}"
+       class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left"></i> Назад к товарам
+    </a>
+  </div>
+{% endblock shop_content %}
