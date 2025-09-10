@@ -1,0 +1,76 @@
+{% extends 'shop/base.html' %}
+
+{% load static %}
+
+{% block breadcrumbs %}
+  <li class="breadcrumb-item">
+    <a href="{% url 'shop:product_list' %}">Товары</a>
+  </li>
+  <li class="breadcrumb-item active">Удалить</li>
+{% endblock breadcrumbs %}
+{% block shop_content %}
+  <div class="form-container">
+    <h2 class="form-title text-danger">
+      <i class="fas fa-exclamation-triangle"></i> Удаление товара
+    </h2>
+    <div class="alert alert-warning" role="alert">
+      <h5 class="alert-heading">Внимание!</h5>
+      <p>
+        Вы собираетесь удалить товар <strong>"{{ object.title }}"</strong>.
+      </p>
+      {% if object.basket_items.exists %}
+        <p class="mb-0">
+          <strong>Внимание:</strong> Этот товар находится в корзинах пользователей ({{ object.basket_items.count }} раз).
+          Он будет удален из всех корзин.
+        </p>
+      {% endif %}
+      {% if object.order_items.exists %}
+        <p class="mb-0">
+          <strong>Внимание:</strong> Этот товар есть в заказах ({{ object.order_items.count }} раз).
+          Заказы останутся без изменений, но товар будет удален.
+        </p>
+      {% endif %}
+    </div>
+    <!-- Product preview -->
+    <div class="card mb-4">
+      <div class="row g-0">
+        <div class="col-md-3">
+          {% if object.images.first %}
+            <img src="{{ object.images.first.src.url }}"
+                 class="img-fluid rounded-start product-preview-img"
+                 alt="{{ object.images.first.alt }}" />
+          {% else %}
+            <div class="bg-light d-flex align-items-center justify-content-center rounded-start product-preview-placeholder">
+              <i class="fas fa-image fa-2x text-muted"></i>
+            </div>
+          {% endif %}
+        </div>
+        <div class="col-md-9">
+          <div class="card-body">
+            <h5 class="card-title">{{ object.title }}</h5>
+            <p class="card-text text-muted">{{ object.category.title }}</p>
+            <p class="card-text">
+              <span class="text-success fw-bold">{{ object.price }} руб.</span>
+              {% if object.available %}
+                <span class="badge bg-success ms-2">В наличии</span>
+              {% else %}
+                <span class="badge bg-danger ms-2">Недоступен</span>
+              {% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-actions d-flex justify-content-between">
+        <a href="{% url 'shop:product_list' %}" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> Отмена
+        </a>
+        <button type="submit" class="btn btn-danger">
+          <i class="fas fa-trash"></i> Удалить товар
+        </button>
+      </div>
+    </form>
+  </div>
+{% endblock shop_content %}
