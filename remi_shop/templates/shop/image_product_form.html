@@ -1,0 +1,72 @@
+{% extends 'shop/base.html' %}
+
+{% load static %}
+
+{% block breadcrumbs %}
+  <li class="breadcrumb-item">
+    <a href="{% url 'shop:product_list' %}">Товары</a>
+  </li>
+  <li class="breadcrumb-item active">
+    {% if object %}
+      Редактировать изображение
+    {% else %}
+      Добавить изображение
+    {% endif %}
+  </li>
+{% endblock breadcrumbs %}
+{% block shop_content %}
+  <div class="form-container">
+    <h2 class="form-title">
+      {% if object %}
+        <i class="fas fa-edit"></i> Редактировать изображение товара
+      {% else %}
+        <i class="fas fa-plus"></i> Добавить изображение товара
+      {% endif %}
+    </h2>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="{{ form.src.id_for_label }}" class="form-label">{{ form.src.label }}</label>
+        {{ form.src }}
+        {% if form.src.errors %}
+          <div class="invalid-feedback d-block">
+            {% for error in form.src.errors %}{{ error }}{% endfor %}
+          </div>
+        {% endif %}
+      </div>
+      <div class="form-group">
+        <label for="{{ form.alt.id_for_label }}" class="form-label">{{ form.alt.label }}</label>
+        {{ form.alt }}
+        {% if form.alt.errors %}
+          <div class="invalid-feedback d-block">
+            {% for error in form.alt.errors %}{{ error }}{% endfor %}
+          </div>
+        {% endif %}
+      </div>
+      {% if not object %}
+        <div class="form-group">
+          <label for="{{ form.product.id_for_label }}" class="form-label">{{ form.product.label }}</label>
+          {{ form.product }}
+          {% if form.product.errors %}
+            <div class="invalid-feedback d-block">
+              {% for error in form.product.errors %}{{ error }}{% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+      <div class="form-actions d-flex justify-content-between">
+        <a href="{% url 'shop:product_list' %}" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> Отмена
+        </a>
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save"></i>
+          {% if object %}
+            Сохранить изменения
+          {% else %}
+            Добавить изображение
+          {% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+{% endblock shop_content %}
