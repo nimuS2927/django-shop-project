@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block css %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'css/shop.css' %}" />
+{% endblock css %}
+{% block title %}
+  {{ title|default:"Магазин" }}
+{% endblock title %}
+{% block content %}
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Sidebar -->
+      <div class="col-md-3 col-lg-2 sidebar">
+        <div class="sidebar-content">
+          <h5 class="sidebar-title">Каталог</h5>
+          <ul class="nav flex-column">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'shop:product_list' %}">
+                <i class="fas fa-th-large"></i> Все товары
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'shop:category_list' %}">
+                <i class="fas fa-list"></i> Категории
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'shop:promotion_list' %}">
+                <i class="fas fa-percentage"></i> Акции
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'shop:tag_list' %}">
+                <i class="fas fa-tags"></i> Теги
+              </a>
+            </li>
+          </ul>
+          {% if user.is_authenticated %}
+            <hr />
+            <h6 class="sidebar-title">Личный кабинет</h6>
+            <ul class="nav flex-column">
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'shop:basket' %}">
+                  <i class="fas fa-shopping-cart"></i> Корзина
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'shop:order_list' %}">
+                  <i class="fas fa-box"></i> Мои заказы
+                </a>
+              </li>
+            </ul>
+          {% endif %}
+        </div>
+      </div>
+      <!-- Main content -->
+      <div class="col-md-9 col-lg-10 main-content">
+        <!-- Breadcrumbs -->
+        <nav aria-label="breadcrumb" class="mb-3">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <a href="{% url 'shop:product_list' %}">Магазин</a>
+            </li>
+            {% block breadcrumbs %}
+            {% endblock breadcrumbs %}
+          </ol>
+        </nav>
+        <!-- Messages -->
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show"
+                 role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+        <!-- Page content -->
+        {% block shop_content %}
+        {% endblock shop_content %}
+      </div>
+    </div>
+  </div>
+{% endblock content %}
+{% block extra_js %}
+  <script src="{% static 'js/shop.js' %}"></script>
+{% endblock extra_js %}
