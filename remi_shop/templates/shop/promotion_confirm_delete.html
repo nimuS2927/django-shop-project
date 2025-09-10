@@ -1,0 +1,40 @@
+{% extends 'shop/base.html' %}
+
+{% load static %}
+
+{% block breadcrumbs %}
+  <li class="breadcrumb-item">
+    <a href="{% url 'shop:promotion_list' %}">Акции</a>
+  </li>
+  <li class="breadcrumb-item active">Удалить</li>
+{% endblock breadcrumbs %}
+{% block shop_content %}
+  <div class="form-container">
+    <h2 class="form-title text-danger">
+      <i class="fas fa-exclamation-triangle"></i> Удаление акции
+    </h2>
+    <div class="alert alert-warning" role="alert">
+      <h5 class="alert-heading">Внимание!</h5>
+      <p>
+        Вы собираетесь удалить акцию <strong>"{{ object.title }}"</strong>.
+      </p>
+      {% if object.products.exists %}
+        <p class="mb-0">
+          <strong>Внимание:</strong> В этой акции участвуют товары ({{ object.products.count }} шт.).
+          Акция будет удалена, но товары останутся без изменений.
+        </p>
+      {% endif %}
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-actions d-flex justify-content-between">
+        <a href="{% url 'shop:promotion_list' %}" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> Отмена
+        </a>
+        <button type="submit" class="btn btn-danger">
+          <i class="fas fa-trash"></i> Удалить акцию
+        </button>
+      </div>
+    </form>
+  </div>
+{% endblock shop_content %}
