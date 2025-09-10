@@ -1,0 +1,46 @@
+{% extends 'shop/base.html' %}
+
+{% load static %}
+
+{% block breadcrumbs %}
+  <li class="breadcrumb-item">
+    <a href="{% url 'shop:category_list' %}">Категории</a>
+  </li>
+  <li class="breadcrumb-item active">Удалить</li>
+{% endblock breadcrumbs %}
+{% block shop_content %}
+  <div class="form-container">
+    <h2 class="form-title text-danger">
+      <i class="fas fa-exclamation-triangle"></i> Удаление категории
+    </h2>
+    <div class="alert alert-warning" role="alert">
+      <h5 class="alert-heading">Внимание!</h5>
+      <p>
+        Вы собираетесь удалить категорию <strong>"{{ object.title }}"</strong>.
+      </p>
+      {% if object.children.exists %}
+        <p class="mb-0">
+          <strong>Внимание:</strong> У этой категории есть подкатегории ({{ object.children.count }} шт.).
+          Они также будут удалены вместе с этой категорией.
+        </p>
+      {% endif %}
+      {% if object.products.exists %}
+        <p class="mb-0">
+          <strong>Внимание:</strong> В этой категории есть товары ({{ object.products.count }} шт.).
+          Они останутся без категории после удаления.
+        </p>
+      {% endif %}
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-actions d-flex justify-content-between">
+        <a href="{% url 'shop:category_list' %}" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> Отмена
+        </a>
+        <button type="submit" class="btn btn-danger">
+          <i class="fas fa-trash"></i> Удалить категорию
+        </button>
+      </div>
+    </form>
+  </div>
+{% endblock shop_content %}
