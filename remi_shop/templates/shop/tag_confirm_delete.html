@@ -1,0 +1,40 @@
+{% extends 'shop/base.html' %}
+
+{% load static %}
+
+{% block breadcrumbs %}
+  <li class="breadcrumb-item">
+    <a href="{% url 'shop:tag_list' %}">Теги</a>
+  </li>
+  <li class="breadcrumb-item active">Удалить</li>
+{% endblock breadcrumbs %}
+{% block shop_content %}
+  <div class="form-container">
+    <h2 class="form-title text-danger">
+      <i class="fas fa-exclamation-triangle"></i> Удаление тега
+    </h2>
+    <div class="alert alert-warning" role="alert">
+      <h5 class="alert-heading">Внимание!</h5>
+      <p>
+        Вы собираетесь удалить тег <strong>"{{ object.name }}"</strong>.
+      </p>
+      {% if object.products.exists %}
+        <p class="mb-0">
+          <strong>Внимание:</strong> Этот тег используется в товарах ({{ object.products.count }} шт.).
+          Тег будет удален из всех товаров.
+        </p>
+      {% endif %}
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-actions d-flex justify-content-between">
+        <a href="{% url 'shop:tag_list' %}" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> Отмена
+        </a>
+        <button type="submit" class="btn btn-danger">
+          <i class="fas fa-trash"></i> Удалить тег
+        </button>
+      </div>
+    </form>
+  </div>
+{% endblock shop_content %}
