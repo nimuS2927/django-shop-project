@@ -1,0 +1,127 @@
+{% extends 'shop/base.html' %}
+
+{% load static %}
+
+{% block breadcrumbs %}
+  <li class="breadcrumb-item">
+    <a href="{% url 'shop:promotion_list' %}">Акции</a>
+  </li>
+  <li class="breadcrumb-item active">{{ promotion.title }}</li>
+{% endblock breadcrumbs %}
+{% block shop_content %}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{{ promotion.title }}</h1>
+    {% if user.is_authenticated %}
+      <div class="btn-group" role="group">
+        <a href="{% url 'shop:promotion_update' promotion.pk %}"
+           class="btn btn-outline-secondary">
+          <i class="fas fa-edit"></i> Редактировать
+        </a>
+        <a href="{% url 'shop:promotion_delete' promotion.pk %}"
+           class="btn btn-outline-danger">
+          <i class="fas fa-trash"></i> Удалить
+        </a>
+      </div>
+    {% endif %}
+  </div>
+  <div class="row">
+    <div class="col-md-8">
+      {% if promotion.description %}
+        <div class="card mb-4">
+          <div class="card-body">
+            <h5>Описание акции</h5>
+            <p>{{ promotion.description|linebreaks }}</p>
+          </div>
+        </div>
+      {% endif %}
+      <!-- Promotion Products -->
+      {% if promotion.products.exists %}
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Товары в акции</h5>
+          </div>
+          <div class="card-body">
+            <div class="product-grid">
+              {% for product in promotion.products.all %}
+                <div class="product-card">
+                  {% if product.images.first %}
+                    <img src="{{ product.images.first.src.url }}"
+                         class="product-image"
+                         alt="{{ product.images.first.alt }}" />
+                  {% else %}
+                    <div class="product-image bg-light d-flex align-items-center justify-content-center">
+                      <i class="fas fa-image fa-2x text-muted"></i>
+                    </div>
+                  {% endif %}
+                  <div class="product-info">
+                    <h6 class="product-title">
+                      <a href="{% url 'shop:product_detail' product.pk %}"
+                         class="text-decoration-none">{{ product.title }}</a>
+                    </h6>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <span class="text-success fw-bold">{{ product.price }} руб.</span>
+                      <span class="badge bg-success">{{ promotion.discount_percent }}% скидка</span>
+                    </div>
+                    <a href="{% url 'shop:product_detail' product.pk %}"
+                       class="btn btn-outline-primary btn-sm w-100">
+                      <i class="fas fa-eye"></i> Подробнее
+                    </a>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Информация об акции</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <strong>Скидка:</strong>
+            {% if promotion.discount_percent %}
+              <span class="badge bg-success fs-6">{{ promotion.discount_percent }}%</span>
+            {% else %}
+              <span class="text-muted">Не указана</span>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            <strong>Период действия:</strong>
+            <div class="mt-1">
+              <small class="text-muted">
+                <i class="fas fa-calendar"></i>
+                {{ promotion.start_date|date:"d.m.Y H:i" }}
+              </small>
+              <br />
+              <small class="text-muted">
+                <i class="fas fa-calendar"></i>
+                {{ promotion.end_date|date:"d.m.Y H:i" }}
+              </small>
+            </div>
+          </div>
+          <div class="mb-3">
+            <strong>Статус:</strong>
+            {% if promotion.is_active %}
+              <span class="badge bg-success">Активна</span>
+            {% else %}
+              <span class="badge bg-secondary">Неактивна</span>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            <strong>Товаров в акции:</strong>
+            <span class="fw-bold">{{ promotion.products.count }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <a href="{% url 'shop:promotion_list' %}"
+           class="btn btn-outline-secondary w-100">
+          <i class="fas fa-arrow-left"></i> Назад к акциям
+        </a>
+      </div>
+    </div>
+  </div>
+{% endblock shop_content %}
