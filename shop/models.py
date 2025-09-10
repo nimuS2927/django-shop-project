@@ -189,10 +189,14 @@ class Product(IDMixin, TimestampMixin, ShortDescriptionMixin, models.Model):
         Возвращает цену с учётом активных акций.
         """
         price = self.price
-        prices_with_discount = [
-            promo.apply_price_with_discount(price) for promo in self.promotions.all()
-        ]
-        return min(prices_with_discount)
+        promotions = self.promotions.all()
+        if promotions:
+            prices_with_discount = [
+                promo.apply_price_with_discount(price)
+                for promo in self.promotions.all()
+            ]
+            price = min(prices_with_discount)
+        return price
 
 
 def path_to_product_image(instance: "ImageProduct", filename: str) -> str:
