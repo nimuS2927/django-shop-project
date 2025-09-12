@@ -17,23 +17,23 @@ from django.views.generic import TemplateView
 from django.views.generic import UpdateView
 from django.views.generic import View
 
-from .basket import SessionBasket
-from .forms import CategoryForm
-from .forms import ImageCategoryForm
-from .forms import ImageProductForm
-from .forms import ProductForm
-from .forms import ProductSearchForm
-from .forms import PromotionForm
-from .forms import TagForm
-from .models import Basket
-from .models import Category
-from .models import ImageCategory
-from .models import ImageProduct
-from .models import Order
-from .models import OrderItem
-from .models import Product
-from .models import Promotion
-from .models import Tag
+from shop.basket import SessionBasket
+from shop.forms import CategoryForm
+from shop.forms import ImageCategoryForm
+from shop.forms import ImageProductForm
+from shop.forms import ProductForm
+from shop.forms import ProductSearchForm
+from shop.forms import PromotionForm
+from shop.forms import TagForm
+from shop.models import Basket
+from shop.models import Category
+from shop.models import ImageCategory
+from shop.models import ImageProduct
+from shop.models import Order
+from shop.models import OrderItem
+from shop.models import Product
+from shop.models import Promotion
+from shop.models import Tag
 
 
 class StartPageView(TemplateView):
