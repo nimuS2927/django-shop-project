@@ -42,7 +42,7 @@ class SessionBasket:
         """
         Добавляет или обновляет товар в корзине
         """
-        price = product.get_price_with_promotions()
+        price = product.get_price_with_promotions
 
         product_id = str(product.id)
         if product_id not in self.basket:
