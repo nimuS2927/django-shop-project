@@ -1,7 +1,9 @@
+from collections import defaultdict
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models.query import QuerySet
 from django.utils import timezone
 from mptt.models import MPTTModel
 from mptt.models import TreeForeignKey
@@ -85,6 +87,30 @@ class Category(IDMixin, TimestampMixin, MPTTModel):
     def __str__(self):
         return f"ID: {self.id} | {self.title}"
 
+    @classmethod
+    def build_tree(cls, queryset: QuerySet | None = None):
+        if not queryset:
+            queryset = cls.objects.all().prefetch_related("image")
+
+        tree = defaultdict(list)
+        nodes = {}
+
+        for cat in queryset:
+            nodes[cat.id] = {
+                "id": cat.id,
+                "title": getattr(cat, "title", None),
+                "image": getattr(cat, "image", None),
+                "subcategories": [],
+            }
+            tree[cat.parent_id].append(cat.id)
+
+        for parent_id, children_ids in tree.items():
+            if parent_id is not None:
+                parent = nodes[parent_id]
+                parent["subcategories"].extend(nodes[ch_id] for ch_id in children_ids)
+
+        return [nodes[root_id] for root_id in tree[None]]
+
 
 def path_to_category_image(instance: "ImageCategory", filename: str) -> str:
     return f"category_{instance.category_id}/images/{filename}"
@@ -163,10 +189,24 @@ class Product(IDMixin, TimestampMixin, ShortDescriptionMixin, models.Model):
     def __str__(self):
         return f"{self.title} - {self.price} Руб."
 
-    def get_available(self):
+    def save(self, *args, **kwargs):
         self.available = self.count > 0
-        self.save()
-        return self.available
+        super().save(*args, **kwargs)
+
+    @property
+    def get_price_with_promotions(self):
+        """
+        Возвращает цену с учётом активных акций.
+        """
+        price = self.price
+        promotions = self.promotions.all()
+        if promotions:
+            prices_with_discount = [
+                promo.apply_price_with_discount(price)
+                for promo in self.promotions.all()
+            ]
+            price = min(prices_with_discount)
+        return price
 
     def get_tags_list(self):
         if self.tags is not None:
@@ -183,20 +223,6 @@ class Product(IDMixin, TimestampMixin, ShortDescriptionMixin, models.Model):
             }
             for image in self.images.all()
         ]
-
-    def get_price_with_promotions(self):
-        """
-        Возвращает цену с учётом активных акций.
-        """
-        price = self.price
-        promotions = self.promotions.all()
-        if promotions:
-            prices_with_discount = [
-                promo.apply_price_with_discount(price)
-                for promo in self.promotions.all()
-            ]
-            price = min(prices_with_discount)
-        return price
 
 
 def path_to_product_image(instance: "ImageProduct", filename: str) -> str:
@@ -251,11 +277,13 @@ class PromotionProduct(IDMixin, TimestampMixin, models.Model):
         "Promotion",
         on_delete=models.CASCADE,
         verbose_name="Акция",
+        related_name="promotion_products",
     )
     product = models.ForeignKey(
         "Product",
         on_delete=models.CASCADE,
         verbose_name="Товар",
+        related_name="promotion_products",
     )
     limit = models.SmallIntegerField(
         verbose_name="Лимит продаж по акции",
@@ -290,12 +318,19 @@ class PromotionProduct(IDMixin, TimestampMixin, models.Model):
             )
         super().save(*args, **kwargs)
 
+    @property
     def available_for_sale(self):
         return (
             999  # Продажа не ограничена
             if self.limit in [None, 0]
             else self.limit - self.quantity_sold
         )
+
+
+class PromotionQuerySet(models.QuerySet):
+    def active(self):
+        now = timezone.now()
+        return self.filter(is_active=True, start_date__lte=now, end_date__gte=now)
 
 
 class Promotion(IDMixin, TimestampMixin, ShortDescriptionMixin, models.Model):
@@ -316,6 +351,8 @@ class Promotion(IDMixin, TimestampMixin, ShortDescriptionMixin, models.Model):
     end_date = models.DateTimeField(verbose_name="Дата окончания")
     is_active = models.BooleanField("Активна", default=True)
 
+    objects = PromotionQuerySet.as_manager()
+
     class Meta:
         verbose_name = "Акция"
         verbose_name_plural = "Акции"
@@ -323,7 +360,7 @@ class Promotion(IDMixin, TimestampMixin, ShortDescriptionMixin, models.Model):
     def __str__(self):
         return self.title
 
-    def is_valid(self):
+    def is_valid(self) -> bool:
         now = timezone.now()
         return self.is_active and self.start_date <= now <= self.end_date
 
@@ -393,7 +430,7 @@ class BasketItem(IDMixin, TimestampMixin, models.Model, TotalPriceMixin):
 
     def save(self, *args, **kwargs):
         if self.price in [None, ""]:
-            self.price = self.product.get_price_with_promotions()
+            self.price = self.product.get_price_with_promotions
         super().save(*args, **kwargs)
 
 
@@ -475,5 +512,5 @@ class OrderItem(IDMixin, TimestampMixin, models.Model, TotalPriceMixin):
 
     def save(self, *args, **kwargs):
         if self.price in [None, ""]:
-            self.price = self.product.get_price_with_promotions()
+            self.price = self.product.get_price_with_promotions
         super().save(*args, **kwargs)
