@@ -1,6 +1,7 @@
 from django.urls import path
 
-from . import views
+from shop import views
+from shop import views_api
 
 app_name = "shop"
 
@@ -123,5 +124,25 @@ urlpatterns = [
         "images/product/<int:pk>/delete/",
         views.ImageProductDeleteView.as_view(),
         name="image_product_delete",
+    ),
+]
+
+
+# API URLS
+urlpatterns += [
+    path(
+        "api/categories/",
+        views_api.CategoryApiView.as_view(),
+        name="api_categories",
+    ),
+    path(
+        "api/catalog/",
+        views_api.CatalogAPIView.as_view(),
+        name="api_catalog",
+    ),
+    path(
+        "api/promotions/",
+        views_api.PromotionAPIView.as_view(),
+        name="api_promotions",
     ),
 ]
