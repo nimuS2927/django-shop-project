@@ -48,7 +48,7 @@ watchfiles = "1.1.0"
 
 # Testing
 mypy = "1.17.1"
-django-stubs = { version = "5.2.2", extras = ["compatible-mypy"] }
+django-stubs = { version = "5.2.5", extras = ["compatible-mypy"] }
 pytest = "8.4.2"
 pytest-sugar = "1.1.1"
 djangorestframework-stubs = "3.16.2"
@@ -58,7 +58,7 @@ sphinx = "8.2.3"
 sphinx-autobuild = "2025.8.25"
 
 # Code quality
-ruff = "0.12.12"
+ruff = "0.13.0"
 coverage = "7.10.6"
 djlint = "1.36.4"
 pre-commit = "4.3.0"
