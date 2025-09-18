@@ -25,7 +25,6 @@ from shop.forms import ProductForm
 from shop.forms import ProductSearchForm
 from shop.forms import PromotionForm
 from shop.forms import TagForm
-from shop.models import Basket
 from shop.models import Category
 from shop.models import ImageCategory
 from shop.models import ImageProduct
@@ -410,29 +409,29 @@ class OrderDetailView(LoginRequiredMixin, DetailView):
 
 
 class CreateOrderView(LoginRequiredMixin, View):
-    """Создание заказа из корзины"""
+    """Создание заказа из сессионной корзины"""
 
     def post(self, request):
-        basket, created = Basket.objects.get_or_create(user=request.user)
-        basket_items = basket.items.all()
+        basket = SessionBasket(request)
 
-        if not basket_items.exists():
+        if len(basket) == 0:
             return JsonResponse({"success": False, "message": "Корзина пуста"})
 
-        # Создаем заказ
+        # Создаём заказ
         order = Order.objects.create(user=request.user)
 
-        # Создаем элементы заказа
-        for basket_item in basket_items:
+        # Добавляем товары из сессии в заказ
+        for item in basket:
+            product = item["product"]
             OrderItem.objects.create(
                 order=order,
-                product=basket_item.product,
-                count=basket_item.count,
-                price=basket_item.price,
+                product=product,
+                count=item["count"],
+                price=product.price,
             )
 
-        # Очищаем корзину
-        basket_items.delete()
+        # Очищаем сессионную корзину
+        basket.clear()
 
         return JsonResponse(
             {"success": True, "message": "Заказ успешно создан", "order_id": order.id}

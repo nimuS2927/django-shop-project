@@ -93,6 +93,32 @@ function updateBasketSummary(basketCount, totalCost) {
 }
 
 // ========================
+// Create order
+// ========================
+function createOrder() {
+    fetch('/shop/orders/create/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Перенаправляем на страницу созданного заказа
+            window.location.href = `/shop/orders/${data.order_id}/`;
+        } else {
+            alert(data.message || 'Ошибка при создании заказа');
+        }
+    })
+    .catch(err => {
+        console.error('Ошибка при создании заказа:', err);
+        alert('Ошибка при создании заказа');
+    });
+}
+
+// ========================
 // Event listeners for inputs
 // ========================
 document.addEventListener('DOMContentLoaded', () => {
@@ -112,4 +138,13 @@ document.addEventListener('DOMContentLoaded', () => {
             removeBasketItem(productId);
         });
     });
+
+    // Кнопка "Оформить заказ"
+    const createOrderBtn = document.querySelector('.create-order');
+    if (createOrderBtn) {
+        createOrderBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            createOrder();
+        });
+    }
 });
