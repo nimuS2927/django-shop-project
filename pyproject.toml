@@ -13,7 +13,7 @@ python-slugify = "8.0.4"
 Pillow = "11.3.0"
 rcssmin = "1.1.2"
 argon2-cffi = "25.1.0"
-whitenoise = "6.10.0"
+whitenoise = "6.11.0"
 redis = "6.4.0"
 hiredis = "3.2.1"
 celery = "5.5.3"
@@ -36,7 +36,7 @@ django-filter = "^25.1"
 
 # Django REST Framework
 djangorestframework = "3.16.1"
-django-cors-headers = "4.8.0"
+django-cors-headers = "4.9.0"
 drf-spectacular = "0.28.0"
 djangorestframework-camel-case = "^1.4.2"
 
@@ -48,17 +48,17 @@ watchfiles = "1.1.0"
 
 # Testing
 mypy = "1.17.1"
-django-stubs = { version = "5.2.2", extras = ["compatible-mypy"] }
+django-stubs = { version = "5.2.5", extras = ["compatible-mypy"] }
 pytest = "8.4.2"
 pytest-sugar = "1.1.1"
-djangorestframework-stubs = "3.16.2"
+djangorestframework-stubs = "3.16.3"
 
 # Documentation
 sphinx = "8.2.3"
 sphinx-autobuild = "2025.8.25"
 
 # Code quality
-ruff = "0.12.12"
+ruff = "0.13.1"
 coverage = "7.10.6"
 djlint = "1.36.4"
 pre-commit = "4.3.0"
